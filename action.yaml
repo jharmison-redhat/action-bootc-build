@@ -72,12 +72,12 @@ runs:
           --iidfile=/tmp/iid
         )
         if [[ "${{ inputs.arch }}" ]]; then
-          args+=(--arch ${{ inputs.arch }})
+          args+=(--arch=${{ inputs.arch }})
         fi
         if [[ "${{ inputs.build-args }}" ]]; then
           IFS=$'\n'
           for arg in ${{ inputs.build-args }}; do
-            args+=(--build-arg "$arg")
+            args+=(--build-arg="$arg")
           done
           unset IFS
         fi
@@ -85,12 +85,12 @@ runs:
           context="${{ inputs.context }}"
         fi
         if [[ "${{ inputs.file }}" ]]; then
-          args+=(--file "${{ inputs.file }}")
+          args+=(--file="${{ inputs.file }}")
         fi
         if [[ "${{ inputs.labels }}" ]]; then
           IFS=$'\n'
           for label in ${{ inputs.labels }}; do
-            args+=(--label "$label")
+            args+=(--label="$label")
           done
           unset IFS
         fi
@@ -98,7 +98,7 @@ runs:
           args+=(--no-cache)
         fi
         if [[ "${{ inputs.pull }}" ]]; then
-          args+=(--pull ${{ inputs.pull }})
+          args+=(--pull=${{ inputs.pull }})
         fi
         if [[ "${{ inputs.secret }}" ]]; then
           IFS=$'\n'
@@ -108,7 +108,7 @@ runs:
           unset IFS
         fi
         if [[ "${{ inputs.shm-size }}" ]]; then
-          args+=(--shm-size ${{ inputs.shm-size }})
+          args+=(--shm-size=${{ inputs.shm-size }})
         fi
         sudo podman build "${args[@]}" "${context}"
         echo "iid=$(cat /tmp/iid)" >> $GITHUB_OUTPUT
@@ -130,12 +130,12 @@ runs:
           --entrypoint=/usr/libexec/bootc-base-imagectl
         )
         if [[ "${{ inputs.arch }}" ]]; then
-          args_podman+=(--arch ${{ inputs.arch }})
+          args_podman+=(--arch=${{ inputs.arch }})
         fi
 
         args_imagectl=()
         if [[ "${{ inputs.max-layers }}" ]]; then
-          args_imagectl+=(--max-layers ${{ inputs.max-layers }})
+          args_imagectl+=(--max-layers=${{ inputs.max-layers }})
         fi
         args_imagectl+=$src
         if [[ "${{ inputs.tag }}" ]]; then
