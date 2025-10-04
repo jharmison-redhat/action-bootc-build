@@ -137,7 +137,7 @@ runs:
         if [[ "${{ inputs.max-layers }}" ]]; then
           args_imagectl+=(--max-layers=${{ inputs.max-layers }})
         fi
-        args_imagectl+=$src
+        args_imagectl+=($src)
         if [[ "${{ inputs.tag }}" ]]; then
           args_imagectl+=(${{ inputs.tag }})
         else
