@@ -114,6 +114,7 @@ runs:
         fi
         if [[ "${{ inputs.cache-repo }}" ]]; then
           args+=(--cache-to=${{ inputs.cache-repo }} --cache-from=${{ inputs.cache-repo }})
+        fi
         if [[ "${{ inputs.context }}" ]]; then
           context="${{ inputs.context }}"
         fi
