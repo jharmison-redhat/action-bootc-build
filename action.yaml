@@ -161,7 +161,7 @@ runs:
 
         sudo podman run "${args_podman[@]}" ${src} "${args_imagectl[@]}"
 
-        sudo skopeo inspect containers-storage://$dst > manifest.json
+        sudo skopeo inspect containers-storage:$dst > manifest.json
         echo "iid=$(sudo podman image inspect --format "{{.Id}}" $dst)" >> $GITHUB_OUTPUT
         echo "tag=$dst" >> $GITHUB_OUTPUT
         echo "manifest=${{ github.workspace }}/manifest.json" >> $GITHUB_OUTPUT
