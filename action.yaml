@@ -1,0 +1,68 @@
+name: bootc image builder
+description: >-
+  Allows you to define a bootc image build, rechunk, and publish in a single action. The officially recommended
+  rechunking process, from bootc-base-imagectl, is used to allow flexibility in implementation detail for the bootc
+  project, without depending on rpm-ostree actions and remaining future-proofed.
+author: James Harmison
+branding:
+  icon: upload-cloud
+  color: blue
+
+inputs:
+  annotations:
+    description: Anotations to apply during the final build, separated by newlines
+    required: false
+  arch:
+    description: Set the ARCH of the images to the provided value, instead of the architecture of the build host
+    required: false
+  build-args:
+    description: Build arguments to pass during the final build, separated by newlines
+    required: false
+  context:
+    description: The build context to use for the initial build, if anything other than the repository root
+    required: false
+  file:
+    description: Path or URL for the Containerfile to build, otherwise it follows podman's automatic discovery logic
+    required: false
+  labels:
+    description: Labels to apply during the final build, separated by newlines
+    required: false
+  no-cache:
+    description: Disable the layer cache when building all images
+    required: false
+    default: 'false'
+  pull:
+    description: Base image pull policy for the initial build ("always"|"missing"|"never"|"newer")
+    required: false
+    default: newer
+  secret:
+    description: >-
+      Secrets to make available to RUN instructions in the Containerfile from a file or environment, separated by
+      newlines ("id=mysecret,src=MYSECRET,type=env" or "id=mysecret,src=.mysecret,type=file")
+    required: false
+  shm-size:
+    description: The size of /dev/shm for the initial build
+    required: false
+  tag:
+    description: Tagged name to apply to the final built image before pushing, will not attempt to push if not provided
+    required: false
+  github-token:
+    description: "GitHub Token used to authenticate against a repository for Git context"
+    default: ${{ github.token }}
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Stage inputs
+      id: stage-inputs
+      shell: bash
+      run: |
+        cat << 'EOF' > inputs.json
+        ${{ inputs }}
+        EOF
+    - name: Confirm inputs staged
+      id: confirm-inputs
+      shell: bash
+      run: |
+        cat inputs.json
