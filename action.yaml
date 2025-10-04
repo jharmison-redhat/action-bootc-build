@@ -59,7 +59,7 @@ runs:
       shell: bash
       run: |
         cat << 'EOF' > inputs.json
-        ${{ inputs }}
+        ${{ toJson(inputs) }}
         EOF
     - name: Confirm inputs staged
       id: confirm-inputs
