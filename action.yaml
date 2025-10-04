@@ -61,10 +61,10 @@ inputs:
 
 outputs:
   iid:
-    description: The Podman ImageID of the chunked image left in containers-storage
+    description: The Podman ImageID of the chunked image left in root's containers-storage
     value: ${{ steps.rechunk.outputs.iid }}
   tag:
-    description: The Podman image tag of the chunked image left in containers-storage
+    description: The Podman image tag of the chunked image left in root's containers-storage
     value: ${{ steps.rechunk.outputs.tag }}
   manifest:
     description: The skopeo manifest of the rechunked image
