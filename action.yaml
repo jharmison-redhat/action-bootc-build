@@ -92,6 +92,13 @@ runs:
           --device=/dev/fuse
           --iidfile=/tmp/iid
         )
+        if [[ "${{ inputs.annotations }}" ]]; then
+          IFS=$'\n'
+          for annotation in ${{ inputs.annotations }}; do
+            args+=(--annotation="$annotation")
+          done
+          unset IFS
+        fi
         if [[ "${{ inputs.arch }}" ]]; then
           args+=(--arch=${{ inputs.arch }})
         fi
