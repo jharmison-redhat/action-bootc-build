@@ -10,13 +10,14 @@ branding:
 
 inputs:
   annotations:
-    description: Anotations to apply during the final build, separated by newlines
+    description: Anotations to apply during the build, separated by newlines
     required: false
   arch:
     description: Set the ARCH of the images to the provided value, instead of the architecture of the build host
     required: false
+    default: amd64
   build-args:
-    description: Build arguments to pass during the final build, separated by newlines
+    description: Build arguments to pass during the build, separated by newlines
     required: false
   context:
     description: The build context to use for the initial build, if anything other than the repository root
@@ -25,10 +26,13 @@ inputs:
     description: Path or URL for the Containerfile to build, otherwise it follows podman's automatic discovery logic
     required: false
   labels:
-    description: Labels to apply during the final build, separated by newlines
+    description: Labels to apply during the build, separated by newlines
+    required: false
+  max-layers:
+    description: The maximum number of layers to chunk the final image into
     required: false
   no-cache:
-    description: Disable the layer cache when building all images
+    description: Disable the layer cache when building all images ("true" for true, anything else is false)
     required: false
     default: 'false'
   pull:
@@ -54,15 +58,97 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Stage inputs
-      id: stage-inputs
+    - name: Build the initial unchunked image
+      id: build-unchunked
       shell: bash
       run: |
-        cat << 'EOF' > inputs.json
-        ${{ toJson(inputs) }}
-        EOF
-    - name: Confirm inputs staged
-      id: confirm-inputs
+        set -e
+
+        context=.
+        args=(
+          --security-opt=label=disable
+          --cap-add=all
+          --device=/dev/fuse
+          --iidfile=/tmp/iid
+        )
+        if [[ "${{ inputs.arch }}" ]]; then
+          args+=(--arch ${{ inputs.arch }})
+        fi
+        if [[ "${{ inputs.build-args }}" ]]; then
+          IFS=$'\n'
+          for arg in ${{ inputs.build-args }}; do
+            args+=(--build-arg "$arg")
+          done
+          unset IFS
+        fi
+        if [[ "${{ inputs.context }}" ]]; then
+          context="${{ inputs.context }}"
+        fi
+        if [[ "${{ inputs.file }}" ]]; then
+          args+=(--file "${{ inputs.file }}")
+        fi
+        if [[ "${{ inputs.labels }}" ]]; then
+          IFS=$'\n'
+          for label in ${{ inputs.labels }}; do
+            args+=(--label "$label")
+          done
+          unset IFS
+        fi
+        if [[ "${{ inputs.no-cache }}" = "true" ]]; then
+          args+=(--no-cache)
+        fi
+        if [[ "${{ inputs.pull }}" ]]; then
+          args+=(--pull ${{ inputs.pull }})
+        fi
+        if [[ "${{ inputs.secret }}" ]]; then
+          IFS=$'\n'
+          for secret in ${{ inputs.secret }}; do
+            args+=("--secret=$secret")
+          done
+          unset IFS
+        fi
+        if [[ "${{ inputs.shm-size }}" ]]; then
+          args+=(--shm-size ${{ inputs.shm-size }})
+        fi
+        sudo podman build "${args[@]}" "${context}"
+        echo "iid=$(cat /tmp/iid)" >> $GITHUB_OUTPUT
+
+    - name: Rechunk the image
+      id: rechunk
       shell: bash
       run: |
-        cat inputs.json
+        set -e
+
+        src=${{ steps.build-unchunked.outputs.iid }}
+
+        args_podman=(
+          --rm
+          --privileged
+          --pull=never
+          --security-opt=label=disable
+          -v /var/lib/containers:/var/lib/containers
+          --entrypoint=/usr/libexec/bootc-base-imagectl
+        )
+        if [[ "${{ inputs.arch }}" ]]; then
+          args_podman+=(--arch ${{ inputs.arch }})
+        fi
+
+        args_imagectl=()
+        if [[ "${{ inputs.max-layers }}" ]]; then
+          args_imagectl+=(--max-layers ${{ inputs.max-layers }})
+        fi
+        args_imagectl+=$src
+        if [[ "${{ inputs.tag }}" ]]; then
+          args_imagectl+=(${{ inputs.tag }})
+        else
+          echo "WARNING: Will not be able to access the chunked image after action run" >&2
+          args_imagectl+=(localhost/chunked)
+        fi
+        sudo podman run "${args_podman[@]}" ${src} "${args_imagectl[@]}"
+
+    - name: Push the image
+      id: push
+      shell: bash
+      if: ${{ inputs.tag }}
+      run: |
+        sudo podman push ${{ inputs.tag }}
