@@ -157,7 +157,7 @@ runs:
         if [[ "${{ inputs.max-layers }}" ]]; then
           args_imagectl+=(--max-layers=${{ inputs.max-layers }})
         fi
-        args_imagectl+=($src $dest)
+        args_imagectl+=($src $dst)
 
         sudo podman run "${args_podman[@]}" ${src} "${args_imagectl[@]}"
 
