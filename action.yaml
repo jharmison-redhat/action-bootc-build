@@ -62,7 +62,7 @@ runs:
       id: build-unchunked
       shell: bash
       run: |
-        set -e
+        set -ex
 
         context=.
         args=(
