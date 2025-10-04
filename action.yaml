@@ -39,6 +39,10 @@ inputs:
     description: Base image pull policy for the initial build ("always"|"missing"|"never"|"newer")
     required: false
     default: newer
+  push:
+    description: Push the final chunked image to the tag after build ("true" for true, anything else is false)
+    required: false
+    default: 'false'
   secret:
     description: >-
       Secrets to make available to RUN instructions in the Containerfile from a file or environment, separated by
@@ -48,12 +52,23 @@ inputs:
     description: The size of /dev/shm for the initial build
     required: false
   tag:
-    description: Tagged name to apply to the final built image before pushing, will not attempt to push if not provided
+    description: Tagged name to apply to the final built image
     required: false
   github-token:
     description: "GitHub Token used to authenticate against a repository for Git context"
     default: ${{ github.token }}
     required: false
+
+outputs:
+  iid:
+    description: The Podman ImageID of the chunked image left in containers-storage
+    value: ${{ steps.rechunk.outputs.iid }}
+  tag:
+    description: The Podman image tag of the chunked image left in containers-storage
+    value: ${{ steps.rechunk.outputs.tag }}
+  manifest:
+    description: The skopeo manifest of the rechunked image
+    value: ${{ steps.rechunk.outputs.manifest }}
 
 runs:
   using: composite
@@ -111,7 +126,7 @@ runs:
           args+=(--shm-size=${{ inputs.shm-size }})
         fi
         sudo podman build "${args[@]}" "${context}"
-        echo "iid=$(cat /tmp/iid)" >> $GITHUB_OUTPUT
+        echo "iid=$(cut -d: -f2 /tmp/iid)" >> $GITHUB_OUTPUT
 
     - name: Rechunk the image
       id: rechunk
@@ -120,6 +135,11 @@ runs:
         set -e
 
         src=${{ steps.build-unchunked.outputs.iid }}
+        if [[ "${{ inputs.tag }}" ]]; then
+          dst=${{ inputs.tag }}
+        else
+          dst=localhost/chunked
+        fi
 
         args_podman=(
           --rm
@@ -137,18 +157,20 @@ runs:
         if [[ "${{ inputs.max-layers }}" ]]; then
           args_imagectl+=(--max-layers=${{ inputs.max-layers }})
         fi
-        args_imagectl+=($src)
-        if [[ "${{ inputs.tag }}" ]]; then
-          args_imagectl+=(${{ inputs.tag }})
-        else
-          echo "WARNING: Will not be able to access the chunked image after action run" >&2
-          args_imagectl+=(localhost/chunked)
-        fi
+        args_imagectl+=($src $dest)
+
         sudo podman run "${args_podman[@]}" ${src} "${args_imagectl[@]}"
+
+        sudo skopeo inspect containers-storage://$dst > manifest.json
+        echo "iid=$(sudo podman image inspect --format "{{.Id}}" $dst)" >> $GITHUB_OUTPUT
+        echo "tag=$dst" >> $GITHUB_OUTPUT
+        echo "manifest=${{ github.workspace }}/manifest.json" >> $GITHUB_OUTPUT
+
+        cat $GITHUB_OUTPUT
 
     - name: Push the image
       id: push
       shell: bash
-      if: ${{ inputs.tag }}
+      if: ${{ inputs.push == 'true' }}
       run: |
         sudo podman push ${{ inputs.tag }}
