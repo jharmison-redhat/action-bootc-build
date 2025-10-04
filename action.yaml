@@ -73,6 +73,19 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Ensure we can cache rootful containers storage
+      id: tar-suid
+      shell: bash
+      run: |
+        sudo chown root /usr/bin/tar && sudo chmod u+s /usr/bin/tar
+
+    - name: Cache containers-storage
+      id: cache-containers-storage
+      uses: actions/cache@v4
+      with:
+        path: /var/lib/containers
+        key: ${{ github.repository }}
+
     - name: Build the initial unchunked image
       id: build-unchunked
       shell: bash
