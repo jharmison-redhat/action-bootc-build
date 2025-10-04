@@ -16,8 +16,14 @@ inputs:
     description: Set the ARCH of the images to the provided value, instead of the architecture of the build host
     required: false
     default: amd64
+  authfile:
+    description: Alternative authfile location to use for podman push and/or layer cache
+    required: false
   build-args:
     description: Build arguments to pass during the build, separated by newlines
+    required: false
+  cache-repo:
+    description: An OCI repository to use for image layer cache on the initial build only
     required: false
   context:
     description: The build context to use for the initial build, if anything other than the repository root
@@ -89,6 +95,9 @@ runs:
         if [[ "${{ inputs.arch }}" ]]; then
           args+=(--arch=${{ inputs.arch }})
         fi
+        if [[ "${{ inputs.authfile }}" ]]; then
+          args+=(--authfile=${{ inputs.authfile }})
+        fi
         if [[ "${{ inputs.build-args }}" ]]; then
           IFS=$'\n'
           for arg in ${{ inputs.build-args }}; do
@@ -96,6 +105,8 @@ runs:
           done
           unset IFS
         fi
+        if [[ "${{ inputs.cache-repo }}" ]]; then
+          args+=(--cache-to=${{ inputs.cache-repo }} --cache-from=${{ inputs.cache-repo }})
         if [[ "${{ inputs.context }}" ]]; then
           context="${{ inputs.context }}"
         fi
@@ -173,4 +184,8 @@ runs:
       shell: bash
       if: ${{ inputs.push == 'true' }}
       run: |
-        sudo podman push ${{ inputs.tag }}
+        args=()
+        if [[ "${{ inputs.authfile }}" ]]; then
+          args+=(--authfile=${{ inputs.authfile }})
+        fi
+        sudo podman push "${args[@]}" ${{ inputs.tag }}
