@@ -133,7 +133,7 @@ runs:
           args_podman+=(--arch=${{ inputs.arch }})
         fi
 
-        args_imagectl=()
+        args_imagectl=(rechunk)
         if [[ "${{ inputs.max-layers }}" ]]; then
           args_imagectl+=(--max-layers=${{ inputs.max-layers }})
         fi
