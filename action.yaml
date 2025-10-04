@@ -138,7 +138,7 @@ runs:
         if [[ "${{ inputs.tag }}" ]]; then
           dst=${{ inputs.tag }}
         else
-          dst=localhost/chunked
+          dst=localhost/chunked:${{ github.run_id }}-${{ github.run_number }}
         fi
 
         args_podman=(
