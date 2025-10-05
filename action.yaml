@@ -71,10 +71,6 @@ inputs:
   tag:
     description: Tagged name to apply to the final built image
     required: false
-  github-token:
-    description: "GitHub Token used to authenticate against a repository for Git context"
-    default: ${{ github.token }}
-    required: false
 
 outputs:
   iid:
