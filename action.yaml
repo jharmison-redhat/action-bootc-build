@@ -52,7 +52,9 @@ inputs:
     required: false
     default: newer
   push:
-    description: Push the final chunked image to the tag after build ("true" for true, anything else is false)
+    description: |
+      Push the final chunked image to the tag after build ("true" for true, anything else is false)
+      NOTE: Requires that you already be logged into the registry using redhat-actions/podman-login@v1 or similar.
     required: false
     default: 'false'
   secret:
@@ -89,16 +91,19 @@ runs:
       id: bind-graphroot
       shell: bash
       run: |
+        # Bind mount ${{ inputs.graphroot }} over /var/lib/containers/storage
         set -x
 
         sudo mkdir -p "${{ inputs.graphroot }}"
         sudo mount --bind "${{ inputs.graphroot }}" /var/lib/containers/storage
+        sudo df -h
 
     - name: Build the initial unchunked image
       id: build-unchunked
       shell: bash
       run: |
-        set -ex
+        # Run the initial podman build
+        set -x
 
         context=.
         args=(
@@ -166,6 +171,7 @@ runs:
       id: rechunk
       shell: bash
       run: |
+        # Use bootc-base-imagectl to rechunk the build
         set -e
 
         src=${{ steps.build-unchunked.outputs.iid }}
@@ -207,6 +213,7 @@ runs:
       shell: bash
       if: ${{ inputs.push == 'true' }}
       run: |
+        # Push the rechunked image
         args=()
         if [[ "${{ inputs.authfile }}" ]]; then
           args+=(--authfile=${{ inputs.authfile }})
