@@ -175,7 +175,7 @@ runs:
           args_podman+=(--arch=${{ inputs.arch }})
         fi
         if [[ "${{ inputs.graphroot }}" ]]; then
-          args+=(-v "${{ inputs.graphroot }}:/var/lib/containers/storage")
+          args_podman+=(-v "${{ inputs.graphroot }}:/var/lib/containers/storage")
         fi
 
         args_imagectl=(rechunk)
