@@ -1,8 +1,6 @@
 name: bootc image builder
 description: >-
-  Allows you to define a bootc image build, rechunk, and publish in a single action. The officially recommended
-  rechunking process, from bootc-base-imagectl, is used to allow flexibility in implementation detail for the bootc
-  project, without depending on rpm-ostree actions and remaining future-proofed.
+  Perform bootc image build, rechunk using bootc-base-imagectl, and optionally publish in a single action.
 author: James Harmison
 branding:
   icon: upload-cloud
