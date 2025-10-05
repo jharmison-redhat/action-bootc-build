@@ -31,6 +31,12 @@ inputs:
   file:
     description: Path or URL for the Containerfile to build, otherwise it follows podman's automatic discovery logic
     required: false
+  graphroot:
+    description: >
+      A path to use as backing storage for the podman graphroot, via bind mount, to ensure enough space for the image
+      build (on GitHub Hosted Runners, /mnt is a dedicated partition with around 60 GB of free space)
+    required: false
+    default: /mnt/containers-storage
   labels:
     description: Labels to apply during the build, separated by newlines
     required: false
@@ -79,6 +85,15 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Prepare the graphroot storage location
+      id: bind-graphroot
+      shell: bash
+      run: |
+        set -x
+
+        sudo mkdir -p "${{ inputs.graphroot }}"
+        sudo mount --bind "${{ inputs.graphroot }}" /var/lib/containers/storage
+
     - name: Build the initial unchunked image
       id: build-unchunked
       shell: bash
