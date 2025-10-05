@@ -34,7 +34,6 @@ inputs:
   graphroot:
     description: Location for the rootful podman graphroot
     required: false
-    default: /var/lib/containers
   labels:
     description: Labels to apply during the build, separated by newlines
     required: false
@@ -164,22 +163,19 @@ runs:
           dst=localhost/chunked:${{ github.run_id }}-${{ github.run_number }}
         fi
 
-        if [[ "${{ inputs.graphroot }}" ]]; then
-          graphroot="${{ inputs.graphroot }}"
-        else
-          graphroot=/var/lib/containers
-        fi
-
         args_podman=(
           --rm
           --privileged
           --pull=never
           --security-opt=label=disable
-          -v "$graphroot:/var/lib/containers"
+          -v /var/lib/containers:/var/lib/containers
           --entrypoint=/usr/libexec/bootc-base-imagectl
         )
         if [[ "${{ inputs.arch }}" ]]; then
           args_podman+=(--arch=${{ inputs.arch }})
+        fi
+        if [[ "${{ inputs.graphroot }}" ]]; then
+          args+=(-v "${{ inputs.graphroot }}:/var/lib/containers/storage")
         fi
 
         args_imagectl=(rechunk)
