@@ -31,6 +31,10 @@ inputs:
   file:
     description: Path or URL for the Containerfile to build, otherwise it follows podman's automatic discovery logic
     required: false
+  graphroot:
+    description: Location for the rootful podman graphroot
+    required: false
+    default: /var/lib/containers
   labels:
     description: Labels to apply during the build, separated by newlines
     required: false
@@ -160,12 +164,18 @@ runs:
           dst=localhost/chunked:${{ github.run_id }}-${{ github.run_number }}
         fi
 
+        if [[ "${{ inputs.graphroot }}" ]]; then
+          graphroot="${{ inputs.graphroot }}"
+        else
+          graphroot=/var/lib/containers
+        fi
+
         args_podman=(
           --rm
           --privileged
           --pull=never
           --security-opt=label=disable
-          -v /var/lib/containers:/var/lib/containers
+          -v "$graphroot:/var/lib/containers"
           --entrypoint=/usr/libexec/bootc-base-imagectl
         )
         if [[ "${{ inputs.arch }}" ]]; then
