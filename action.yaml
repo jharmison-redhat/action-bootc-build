@@ -175,7 +175,10 @@ runs:
           args_podman+=(--arch=${{ inputs.arch }})
         fi
         if [[ "${{ inputs.graphroot }}" ]]; then
-          args_podman+=(-v "${{ inputs.graphroot }}:/var/lib/containers/storage")
+          args_podman+=(
+            -v "${{ inputs.graphroot }}:${{ inputs.graphroot }}"
+            -v /etc/containers/storage.conf:/etc/containers/storage.conf
+          )
         fi
 
         args_imagectl=(rechunk)
