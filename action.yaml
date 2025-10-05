@@ -57,6 +57,9 @@ inputs:
       NOTE: Requires that you already be logged into the registry using redhat-actions/podman-login@v1 or similar.
     required: false
     default: 'false'
+  rechunk-image:
+    description: An alternate image to use for rechunking (will reuse the unchunked image if not provided)
+    required: false
   secret:
     description: >-
       Secrets to make available to RUN instructions in the Containerfile from a file or environment, separated by
@@ -199,7 +202,13 @@ runs:
         fi
         args_imagectl+=($src $dst)
 
-        sudo podman run "${args_podman[@]}" ${src} "${args_imagectl[@]}"
+        if [[ "${{ inputs.rechunk-image }}" ]]; then
+          args_podman+=(${{ inputs.rechunk-image }})
+        else
+          args_podman+=($src)
+        fi
+
+        sudo podman run "${args_podman[@]}" "${args_imagectl[@]}"
 
         sudo skopeo inspect containers-storage:$dst > manifest.json
         echo "iid=$(sudo podman image inspect --format "{{.Id}}" $dst)" >> $GITHUB_OUTPUT
