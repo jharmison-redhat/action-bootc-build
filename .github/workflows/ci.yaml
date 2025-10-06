@@ -10,6 +10,7 @@ concurrency: # prevent multiple builds at once
 jobs:
   lint:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v5
       - name: Install yamllint
@@ -17,20 +18,34 @@ jobs:
       - name: Lint action
         run: yamllint action.yaml
 
-  test-build-and-rechunk:
+  test-build-rechunk-and-push:
     runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
+
     strategy:
       matrix:
         image:
-          - .github/workflows/fedora
+          - fedora
 
     steps:
       - uses: actions/checkout@v5
 
-      - id: test
+      - name: Log in to ghcr
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Test workflow
+        id: test
         uses: ./
         with:
-          context: ${{ matrix.image }}
+          context: .github/workflows/${{ matrix.image }}
+          tag: ghcr.io/jharmison-redhat/action-bootc-build-test:${{ matrix.image }}-${{ github.head_ref || github.ref }}
+          push: 'true'
 
       - name: Check outputs
         run:
