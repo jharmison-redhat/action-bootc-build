@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      packages: write
+      packages: admin
 
     strategy:
       matrix:
