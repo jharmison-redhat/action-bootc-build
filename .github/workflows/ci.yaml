@@ -29,6 +29,9 @@ jobs:
         image:
           - fedora
 
+    env:
+      IMAGE_TAG: ghcr.io/jharmison-redhat/action-bootc-build-test-${{ github.ref_name }}:${{ matrix.image }}
+
     steps:
       - uses: actions/checkout@v5
 
@@ -44,9 +47,15 @@ jobs:
         uses: ./
         with:
           context: .github/workflows/${{ matrix.image }}
-          tag: ghcr.io/jharmison-redhat/action-bootc-build-test:${{ matrix.image }}-${{ github.head_ref || github.ref }}
+          tag: ${IMAGE_TAG}
           push: 'true'
 
       - name: Check outputs
-        run:
+        run: |
+          set -x
           jq . <<<'${{ toJson(steps.test.outputs) }}'
+          cat ${{ steps.test.outputs.manifest }}
+
+      - name: Clean up image
+        run: |
+          skopeo delete docker://${IMAGE_TAG}
