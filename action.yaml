@@ -117,10 +117,10 @@ runs:
           unset IFS
         fi
         if [[ "${{ inputs.arch }}" ]]; then
-          args+=(--arch=${{ inputs.arch }})
+          args+=(--arch="${{ inputs.arch }}")
         fi
         if [[ "${{ inputs.authfile }}" ]]; then
-          args+=(--authfile=${{ inputs.authfile }})
+          args+=(--authfile="${{ inputs.authfile }}")
         fi
         if [[ "${{ inputs.build-args }}" ]]; then
           IFS=$'\n'
@@ -130,7 +130,7 @@ runs:
           unset IFS
         fi
         if [[ "${{ inputs.cache-repo }}" ]]; then
-          args+=(--cache-to=${{ inputs.cache-repo }} --cache-from=${{ inputs.cache-repo }})
+          args+=(--cache-to="${{ inputs.cache-repo }}" --cache-from="${{ inputs.cache-repo }}")
         fi
         if [[ "${{ inputs.context }}" ]]; then
           context="${{ inputs.context }}"
@@ -149,7 +149,7 @@ runs:
           args+=(--no-cache)
         fi
         if [[ "${{ inputs.pull }}" ]]; then
-          args+=(--pull=${{ inputs.pull }})
+          args+=(--pull="${{ inputs.pull }}")
         fi
         if [[ "${{ inputs.secret }}" ]]; then
           IFS=$'\n'
@@ -159,7 +159,7 @@ runs:
           unset IFS
         fi
         if [[ "${{ inputs.shm-size }}" ]]; then
-          args+=(--shm-size=${{ inputs.shm-size }})
+          args+=(--shm-size="${{ inputs.shm-size }}")
         fi
         sudo podman build "${args[@]}" "${context}"
         echo "iid=$(cut -d: -f2 /tmp/iid)" >> $GITHUB_OUTPUT
@@ -173,9 +173,9 @@ runs:
 
         src=${{ steps.build-unchunked.outputs.iid }}
         if [[ "${{ inputs.tag }}" ]]; then
-          dst=${{ inputs.tag }}
+          dst="${{ inputs.tag }}"
         else
-          dst=localhost/chunked:${{ github.run_id }}-${{ github.run_number }}
+          dst="localhost/chunked:${{ github.run_id }}-${{ github.run_number }}"
         fi
 
         args_podman=(
@@ -187,25 +187,25 @@ runs:
           --entrypoint=/usr/libexec/bootc-base-imagectl
         )
         if [[ "${{ inputs.arch }}" ]]; then
-          args_podman+=(--arch=${{ inputs.arch }})
+          args_podman+=(--arch="${{ inputs.arch }}")
         fi
 
         args_imagectl=(rechunk)
         if [[ "${{ inputs.max-layers }}" ]]; then
-          args_imagectl+=(--max-layers=${{ inputs.max-layers }})
+          args_imagectl+=(--max-layers="${{ inputs.max-layers }}")
         fi
-        args_imagectl+=($src $dst)
+        args_imagectl+=("$src" "$dst")
 
         if [[ "${{ inputs.rechunk-image }}" ]]; then
-          args_podman+=(${{ inputs.rechunk-image }})
+          args_podman+=("${{ inputs.rechunk-image }}")
         else
-          args_podman+=($src)
+          args_podman+=("$src")
         fi
 
         sudo podman run "${args_podman[@]}" "${args_imagectl[@]}"
 
-        sudo skopeo inspect containers-storage:$dst > manifest.json
-        echo "iid=$(sudo podman image inspect --format "{{.Id}}" $dst)" >> $GITHUB_OUTPUT
+        sudo skopeo inspect "containers-storage:$dst" > manifest.json
+        echo "iid=$(sudo podman image inspect --format "{{.Id}}" "$dst")" >> $GITHUB_OUTPUT
         echo "tag=$dst" >> $GITHUB_OUTPUT
         echo "manifest=${{ github.workspace }}/manifest.json" >> $GITHUB_OUTPUT
 
@@ -219,6 +219,6 @@ runs:
         # Push the rechunked image
         args=()
         if [[ "${{ inputs.authfile }}" ]]; then
-          args+=(--authfile=${{ inputs.authfile }})
+          args+=(--authfile="${{ inputs.authfile }}")
         fi
-        sudo podman push "${args[@]}" ${{ inputs.tag }}
+        sudo podman push "${args[@]}" "${{ inputs.tag }}"
