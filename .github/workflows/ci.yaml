@@ -4,7 +4,7 @@ on:
   pull_request:
 
 concurrency: # prevent multiple builds at once
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
