@@ -1,0 +1,57 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+concurrency: # prevent multiple builds at once
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install yamllint
+        run: pip install yamllint
+      - name: Lint action
+        run: yamllint action.yaml
+
+  test-build-rechunk-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
+
+    strategy:
+      matrix:
+        image:
+          - fedora
+
+    env:
+      IMAGE_TAG: ghcr.io/jharmison-redhat/action-bootc-build-test-${{ github.ref_name }}:${{ matrix.image }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Log in to ghcr
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Test workflow
+        id: test
+        uses: ./
+        with:
+          context: .github/workflows/${{ matrix.image }}
+          tag: ${IMAGE_TAG}
+          push: 'true'
+
+      - name: Check outputs
+        run: |
+          set -x
+          jq . <<<'${{ toJson(steps.test.outputs) }}'
+          cat ${{ steps.test.outputs.manifest }}

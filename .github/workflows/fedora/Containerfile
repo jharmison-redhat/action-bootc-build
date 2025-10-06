@@ -1,0 +1,9 @@
+FROM quay.io/fedora/fedora-bootc:latest
+
+RUN dnf -y install postgresql-server && dnf -y clean all
+
+COPY overlay/ /
+
+RUN useradd -m core && chown core:core /usr/local/ssh/core.keys
+
+RUN bootc container lint
