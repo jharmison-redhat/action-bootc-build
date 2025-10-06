@@ -1,0 +1,37 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+concurrency: # prevent multiple builds at once
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install yamllint
+        run: pip install yamllint
+      - name: Lint action
+        run: yamllint action.yaml
+
+  test-build-and-rechunk:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image:
+          - .github/workflows/fedora
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - id: test
+        uses: ./
+        with:
+          context: ${{ matrix.image }}
+
+      - name: Check outputs
+        run:
+          jq . <<<'${{ toJson(steps.test.outputs) }}'
