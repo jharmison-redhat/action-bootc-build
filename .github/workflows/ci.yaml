@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      packages: admin
+      packages: write
 
     strategy:
       matrix:
@@ -55,7 +55,3 @@ jobs:
           set -x
           jq . <<<'${{ toJson(steps.test.outputs) }}'
           cat ${{ steps.test.outputs.manifest }}
-
-      - name: Clean up image
-        run: |
-          skopeo delete docker://${IMAGE_TAG}
