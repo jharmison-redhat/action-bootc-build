@@ -110,11 +110,11 @@ runs:
           --iidfile=/tmp/iid
         )
         if [[ "${{ inputs.annotations }}" ]]; then
-          IFS=$'\n'
-          for annotation in ${{ inputs.annotations }}; do
-            args+=(--annotation="$annotation")
-          done
-          unset IFS
+          while IFS= read -r annotation; do
+            if [[ $annotation ]]; then
+              args+=(--annotation="$annotation")
+            fi
+          done <<< "${{ inputs.annotations }}"
         fi
         if [[ "${{ inputs.arch }}" ]]; then
           args+=(--arch="${{ inputs.arch }}")
@@ -123,11 +123,11 @@ runs:
           args+=(--authfile="${{ inputs.authfile }}")
         fi
         if [[ "${{ inputs.build-args }}" ]]; then
-          IFS=$'\n'
-          for arg in ${{ inputs.build-args }}; do
-            args+=(--build-arg="$arg")
-          done
-          unset IFS
+          while IFS= read -r arg; do
+            if [[ $arg ]]; then
+              args+=(--build-arg="$arg")
+            fi
+          done <<< "${{ inputs.build-args }}"
         fi
         if [[ "${{ inputs.cache-repo }}" ]]; then
           args+=(--cache-to="${{ inputs.cache-repo }}" --cache-from="${{ inputs.cache-repo }}")
@@ -139,11 +139,11 @@ runs:
           args+=(--file="${{ inputs.file }}")
         fi
         if [[ "${{ inputs.labels }}" ]]; then
-          IFS=$'\n'
-          for label in ${{ inputs.labels }}; do
-            args+=(--label="$label")
-          done
-          unset IFS
+          while IFS= read -r label; do
+            if [[ $label ]]; then
+              args+=(--label="$label")
+            fi
+          done <<< "${{ inputs.labels }}"
         fi
         if [[ "${{ inputs.no-cache }}" = "true" ]]; then
           args+=(--no-cache)
@@ -152,11 +152,11 @@ runs:
           args+=(--pull="${{ inputs.pull }}")
         fi
         if [[ "${{ inputs.secret }}" ]]; then
-          IFS=$'\n'
-          for secret in ${{ inputs.secret }}; do
-            args+=("--secret=$secret")
-          done
-          unset IFS
+          while IFS= read -r secret; do
+            if [[ $secret ]]; then
+              args+=("--secret=$secret")
+            fi
+          done <<< "${{ inputs.secret }}"
         fi
         if [[ "${{ inputs.shm-size }}" ]]; then
           args+=(--shm-size="${{ inputs.shm-size }}")

@@ -49,6 +49,9 @@ jobs:
           context: .github/workflows/${{ matrix.image }}
           tag: ${IMAGE_TAG}
           push: 'true'
+          labels: |
+            test-label-two=SomeOtherValue
+            test-label-one=Some label value
 
       - name: Check outputs
         run: |

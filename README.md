@@ -76,7 +76,7 @@ jobs:
 
 ## Inputs
 
-> `List` type is a newline-delimited string
+> `List` type is a newline-delimited string - DO NOT include double-quotes in these
 >
 > ```yaml
 > labels: |
