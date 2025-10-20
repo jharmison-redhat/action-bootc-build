@@ -26,6 +26,10 @@ inputs:
   context:
     description: The build context to use for the initial build, if anything other than the repository root
     required: false
+  extra-args:
+    description: >
+      Arbitrary extra arguments provided to the podman build - avoid whitespace, quoting is possible but unreliable
+    required: false
   file:
     description: Path or URL for the Containerfile to build, otherwise it follows podman's automatic discovery logic
     required: false
@@ -44,7 +48,7 @@ inputs:
   no-cache:
     description: Disable the layer cache when building all images ("true" for true, anything else is false)
     required: false
-    default: 'false'
+    default: "false"
   pull:
     description: Base image pull policy for the initial build ("always"|"missing"|"never"|"newer")
     required: false
@@ -54,7 +58,7 @@ inputs:
       Push the final chunked image to the tag after build ("true" for true, anything else is false)
       NOTE: Requires that you already be logged into the registry using redhat-actions/podman-login@v1 or similar.
     required: false
-    default: 'false'
+    default: "false"
   rechunk-image:
     description: An alternate image to use for rechunking (will reuse the unchunked image if not provided)
     required: false
@@ -160,6 +164,9 @@ runs:
         fi
         if [[ "${{ inputs.shm-size }}" ]]; then
           args+=(--shm-size="${{ inputs.shm-size }}")
+        fi
+        if [[ "${{ inputs.extra-args }}" ]]; then
+          args+=(${{ inputs.extra-args }})
         fi
         sudo podman build "${args[@]}" "${context}"
         echo "iid=$(cut -d: -f2 /tmp/iid)" >> $GITHUB_OUTPUT
